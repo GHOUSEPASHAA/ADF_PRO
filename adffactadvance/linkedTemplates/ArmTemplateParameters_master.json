@@ -1,0 +1,36 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adffactadvance"
+		},
+		"ls_datalake_accountKey": {
+			"value": ""
+		},
+		"ls_sqlexpress_password": {
+			"value": ""
+		},
+		"ls_datalake_properties_typeProperties_url": {
+			"value": "https://storageadvjack.dfs.core.windows.net/"
+		},
+		"ls_restapi_properties_typeProperties_url": {
+			"value": "https://pokeapi.co/api/v2/pokemon"
+		},
+		"ls_sqlexpress_properties_typeProperties_server": {
+			"value": "DESKTOP-0KPSU0R\\SQLEXPRESS"
+		},
+		"ls_sqlexpress_properties_typeProperties_database": {
+			"value": "dbo"
+		},
+		"ls_sqlexpress_properties_typeProperties_userName": {
+			"value": "desktop-0kpsu0r\\lenovo"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
