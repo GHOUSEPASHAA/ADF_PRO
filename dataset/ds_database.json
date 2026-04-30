@@ -1,0 +1,13 @@
+{
+	"name": "ds_database",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sqlexpress",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

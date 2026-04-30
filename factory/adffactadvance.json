@@ -1,0 +1,15 @@
+{
+	"name": "adffactadvance",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Enabled",
+			"editable": true
+		}
+	},
+	"location": "southeastasia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "0fb4f973-f6b5-4485-92d0-c77fc3716bb0",
+		"tenantId": "ded90f18-8732-4b84-8f9a-a57bb1c24b86"
+	}
+}
