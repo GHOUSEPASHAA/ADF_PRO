@@ -5,13 +5,13 @@
 		"annotations": [],
 		"type": "SqlServer",
 		"typeProperties": {
-			"server": "DESKTOP-0KPSU0R\\SQLEXPRESS",
+			"server": "DESKTOP-0KPSU0R\\MSSQLSERVER01",
 			"database": "dbo",
 			"encrypt": "optional",
 			"trustServerCertificate": false,
-			"authenticationType": "Windows",
-			"userName": "desktop-0kpsu0r\\lenovo",
-			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiJhZmFlOTRhMi05NDNiLTQ0YWMtYWY5NC1kY2Q1NTFmNTQyNzMiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+			"authenticationType": "SQL",
+			"userName": "jack",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiIxYmQ4NjJkMS0zMGNlLTRjOTUtOTY0Mi04NTZjMjNmNWNlNWIiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
 		},
 		"connectVia": {
 			"referenceName": "selfhosted",
