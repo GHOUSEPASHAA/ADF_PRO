@@ -25,15 +25,15 @@
 		},
 		"ls_sqlexpress_properties_typeProperties_server": {
 			"type": "string",
-			"defaultValue": "DESKTOP-0KPSU0R\\SQLEXPRESS"
+			"defaultValue": "DESKTOP-0KPSU0R\\MSSQLSERVER01"
 		},
 		"ls_sqlexpress_properties_typeProperties_database": {
 			"type": "string",
-			"defaultValue": "dbo"
+			"defaultValue": "dims"
 		},
 		"ls_sqlexpress_properties_typeProperties_userName": {
 			"type": "string",
-			"defaultValue": "desktop-0kpsu0r\\lenovo"
+			"defaultValue": "jack"
 		}
 	},
 	"variables": {
@@ -155,6 +155,97 @@
 						}
 					}
 				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_datalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_datalake_filelevel')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_datalake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_container": {
+						"type": "string"
+					},
+					"p_folder": {
+						"type": "string"
+					},
+					"p_file": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().p_file",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().p_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().p_container",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_datalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_datalake_folderlevel')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_datalake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_container": {
+						"type": "string"
+					},
+					"p_folder": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().p_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().p_container",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/ls_datalake')]"
@@ -354,7 +445,7 @@
 					"database": "[parameters('ls_sqlexpress_properties_typeProperties_database')]",
 					"encrypt": "optional",
 					"trustServerCertificate": false,
-					"authenticationType": "Windows",
+					"authenticationType": "SQL",
 					"userName": "[parameters('ls_sqlexpress_properties_typeProperties_userName')]",
 					"password": {
 						"type": "SecureString",
@@ -1315,32 +1406,14 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_database')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_sqlexpress",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "SqlServerTable",
-				"schema": [],
-				"typeProperties": {}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_sqlexpress')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/injestion')]",
+			"name": "[concat(parameters('factoryName'), '/sourcesinkmatch')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "last_cdc",
-						"type": "Lookup",
+						"name": "get_sourcedata",
+						"type": "GetMetadata",
 						"dependsOn": [],
 						"policy": {
 							"timeout": "0.12:00:00",
@@ -1351,30 +1424,30 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
-							"source": {
-								"type": "JsonSource",
-								"storeSettings": {
-									"type": "AzureBlobFSReadSettings",
-									"recursive": true,
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "JsonReadSettings"
-								}
-							},
 							"dataset": {
-								"referenceName": "ds_cdc",
+								"referenceName": "ds_datalake_folderlevel",
 								"type": "DatasetReference",
-								"parameters": {}
+								"parameters": {
+									"p_container": "source",
+									"p_folder": "raw_source_gold"
+								}
 							},
-							"firstRowOnly": false
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
 						}
 					},
 					{
-						"name": "LOAD",
-						"type": "Copy",
-						"state": "Inactive",
-						"onInactiveMarkAs": "Succeeded",
+						"name": "get_sink_data",
+						"type": "GetMetadata",
 						"dependsOn": [],
 						"policy": {
 							"timeout": "0.12:00:00",
@@ -1385,67 +1458,39 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
-							"source": {
-								"type": "SqlServerSource",
-								"sqlReaderQuery": {
-									"value": "select * from  @{pipeline().parameters.schema}.@{pipeline().parameters.table} where last_updated > 'activity('last_cdc').output.value[0].cdc_timestamp'",
-									"type": "Expression"
-								},
-								"queryTimeout": "02:00:00",
-								"partitionOption": "None"
-							},
-							"enableStaging": false
-						},
-						"inputs": [
-							{
-								"referenceName": "ds_database",
+							"dataset": {
+								"referenceName": "ds_datalake_folderlevel",
 								"type": "DatasetReference",
-								"parameters": {}
-							}
-						]
-					},
-					{
-						"name": "totalresults",
-						"type": "Script",
-						"dependsOn": [
-							{
-								"activity": "last_cdc",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"linkedServiceName": {
-							"referenceName": "ls_sqlexpress",
-							"type": "LinkedServiceReference"
-						},
-						"typeProperties": {
-							"scripts": [
-								{
-									"type": "Query",
-									"text": {
-										"value": "SELECT COUNT(*) AS totalresults\nFROM @{pipeline().parameters.schema}.@{pipeline().parameters.table}\nWHERE last_updated > \n@{if(\n    empty(pipeline().parameters.backdate),\n    activity('last_cdc').output.value[0].cdc_timestamp,\n    pipeline().parameters.backdate\n)}",
-										"type": "Expression"
-									}
+								"parameters": {
+									"p_container": "sink",
+									"p_folder": "raw_source_gold"
 								}
+							},
+							"fieldList": [
+								"childItems"
 							],
-							"scriptBlockExecutionTimeout": "02:00:00"
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
 						}
 					},
 					{
-						"name": "if new rows",
-						"type": "IfCondition",
+						"name": "Filter1",
+						"type": "Filter",
 						"dependsOn": [
 							{
-								"activity": "totalresults",
+								"activity": "get_sourcedata",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "get_sink_data",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -1453,13 +1498,37 @@
 						],
 						"userProperties": [],
 						"typeProperties": {
-							"expression": {
-								"value": "@greater(activity('totalresults').output.resultSets[0].rows[0].totalresults,0)",
+							"items": {
+								"value": "@activity('get_sourcedata').output.childItems",
 								"type": "Expression"
 							},
-							"ifTrueActivities": [
+							"condition": {
+								"value": "@not(contains(activity('get_sink_data').output.childItems,item()))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Filter1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Filter1').output.value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
 								{
-									"name": "LOAD_copy1",
+									"name": "Copy data1",
 									"type": "Copy",
 									"dependsOn": [],
 									"policy": {
@@ -1472,13 +1541,15 @@
 									"userProperties": [],
 									"typeProperties": {
 										"source": {
-											"type": "SqlServerSource",
-											"sqlReaderQuery": {
-												"value": "SELECT *\nFROM @{pipeline().parameters.schema}.@{pipeline().parameters.table}\nWHERE last_updated > \n@{if(\n    empty(pipeline().parameters.backdate),\n    activity('last_cdc').output.value[0].cdc_timestamp,\n    pipeline().parameters.backdate\n)}",
-												"type": "Expression"
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
 											},
-											"queryTimeout": "02:00:00",
-											"partitionOption": "None"
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
 										},
 										"sink": {
 											"type": "DelimitedTextSink",
@@ -1503,120 +1574,32 @@
 									},
 									"inputs": [
 										{
-											"referenceName": "ds_database",
+											"referenceName": "ds_datalake_filelevel",
 											"type": "DatasetReference",
-											"parameters": {}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "ds_sink",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									]
-								},
-								{
-									"name": "change_cdc",
-									"type": "Copy",
-									"dependsOn": [
-										{
-											"activity": "max_cdc",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "JsonSource",
-											"additionalColumns": [
-												{
-													"name": "cdc_timestamp",
-													"value": {
-														"value": "@activity('max_cdc').output.resultSets[0].rows[0].cdc_timestamp",
-														"type": "Expression"
-													}
-												}
-											],
-											"storeSettings": {
-												"type": "AzureBlobFSReadSettings",
-												"recursive": true,
-												"enablePartitionDiscovery": false
-											},
-											"formatSettings": {
-												"type": "JsonReadSettings"
-											}
-										},
-										"sink": {
-											"type": "JsonSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "JsonWriteSettings"
-											}
-										},
-										"enableStaging": false
-									},
-									"inputs": [
-										{
-											"referenceName": "ds_emptyjson",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "ds_cdc",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									]
-								},
-								{
-									"name": "max_cdc",
-									"type": "Script",
-									"dependsOn": [
-										{
-											"activity": "LOAD_copy1",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"linkedServiceName": {
-										"referenceName": "ls_sqlexpress",
-										"type": "LinkedServiceReference"
-									},
-									"typeProperties": {
-										"scripts": [
-											{
-												"type": "Query",
-												"text": {
-													"value": "select max(last_updated) as cdc_timestamp from @{pipeline().parameters.schema}.@{pipeline().parameters.table}",
+											"parameters": {
+												"p_container": "source",
+												"p_folder": "raw_source_gold",
+												"p_file": {
+													"value": "@item().name",
 													"type": "Expression"
 												}
 											}
-										],
-										"scriptBlockExecutionTimeout": "02:00:00"
-									}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_datalake_filelevel",
+											"type": "DatasetReference",
+											"parameters": {
+												"p_container": "sink",
+												"p_folder": "raw_source_gold",
+												"p_file": {
+													"value": "@item().name",
+													"type": "Expression"
+												}
+											}
+										}
+									]
 								}
 							]
 						}
@@ -1625,29 +1608,104 @@
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
-				"parameters": {
-					"schema": {
-						"type": "string",
-						"defaultValue": "SOURCE"
-					},
-					"table": {
-						"type": "string",
-						"defaultValue": "Orders"
-					},
-					"backdate": {
-						"type": "string",
-						"defaultValue": "2025-09-24"
-					}
-				},
-				"annotations": [],
-				"lastPublishTime": "2026-04-26T09:12:21Z"
+				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_cdc')]",
-				"[concat(variables('factoryId'), '/datasets/ds_database')]",
-				"[concat(variables('factoryId'), '/linkedServices/ls_sqlexpress')]",
-				"[concat(variables('factoryId'), '/datasets/ds_sink')]",
-				"[concat(variables('factoryId'), '/datasets/ds_emptyjson')]"
+				"[concat(variables('factoryId'), '/datasets/ds_datalake_folderlevel')]",
+				"[concat(variables('factoryId'), '/datasets/ds_datalake_filelevel')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/temptables')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "STG_CUSTOMER_ORDERS",
+						"type": "Script",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "ls_sqlexpress",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "\n\nTRUNCATE TABLE STG_CUSTOMER_ORDERS;\n\nINSERT INTO STG_CUSTOMER_ORDERS\nSELECT\n    c.CustomerID,\n    c.CustomerName,\n    o.OrderID,\n    o.OrderDate,\n    o.Amount\nFROM local.Customers c\nJOIN local.Orders o\n    ON c.CustomerID = o.CustomerID;"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					},
+					{
+						"name": "Script1",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "STG_CUSTOMER_ORDERS",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "ls_sqlexpress",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "CREATE TABLE dbo.STG_CUSTOMER_TOTALS\n(\n    CustomerID INT,\n    CustomerName VARCHAR(100),\n    TotalSales DECIMAL(10,2),\n    OrderCount INT\n);\n\nTRUNCATE TABLE dbo.STG_CUSTOMER_TOTALS;\n\nINSERT INTO dbo.STG_CUSTOMER_TOTALS\nSELECT\n    CustomerID,\n    CustomerName,\n    SUM(Amount) AS TotalSales,\n    COUNT(*) AS OrderCount\nFROM dbo.STG_CUSTOMER_ORDERS\nGROUP BY\n    CustomerID,\n    CustomerName;"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sqlexpress')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_database')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sqlexpress",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sqlexpress')]"
 			]
 		}
 	]

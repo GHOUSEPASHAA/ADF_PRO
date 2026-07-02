@@ -25,15 +25,15 @@
 		},
 		"ls_sqlexpress_properties_typeProperties_server": {
 			"type": "string",
-			"defaultValue": "DESKTOP-0KPSU0R\\SQLEXPRESS"
+			"defaultValue": "DESKTOP-0KPSU0R\\MSSQLSERVER01"
 		},
 		"ls_sqlexpress_properties_typeProperties_database": {
 			"type": "string",
-			"defaultValue": "dbo"
+			"defaultValue": "dims"
 		},
 		"ls_sqlexpress_properties_typeProperties_userName": {
 			"type": "string",
-			"defaultValue": "desktop-0kpsu0r\\lenovo"
+			"defaultValue": "jack"
 		},
 		"containerUri": {
 			"type": "string",
@@ -86,6 +86,26 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "adffactadvance_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'adffactadvance_ArmTemplate_0')]"
+			]
 		}
 	]
 }

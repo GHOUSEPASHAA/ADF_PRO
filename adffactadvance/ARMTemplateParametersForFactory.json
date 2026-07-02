@@ -18,13 +18,13 @@
 			"value": "https://pokeapi.co/api/v2/pokemon"
 		},
 		"ls_sqlexpress_properties_typeProperties_server": {
-			"value": "DESKTOP-0KPSU0R\\SQLEXPRESS"
+			"value": "DESKTOP-0KPSU0R\\MSSQLSERVER01"
 		},
 		"ls_sqlexpress_properties_typeProperties_database": {
-			"value": "dbo"
+			"value": "dims"
 		},
 		"ls_sqlexpress_properties_typeProperties_userName": {
-			"value": "desktop-0kpsu0r\\lenovo"
+			"value": "jack"
 		}
 	}
 }
