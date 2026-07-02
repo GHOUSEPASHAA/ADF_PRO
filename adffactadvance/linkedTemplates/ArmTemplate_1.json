@@ -13,6 +13,95 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/temptables')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "STG_CUSTOMER_ORDERS",
+						"type": "Script",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "ls_sqlexpress",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "\n\nTRUNCATE TABLE STG_CUSTOMER_ORDERS;\n\nINSERT INTO STG_CUSTOMER_ORDERS\nSELECT\n    c.CustomerID,\n    c.CustomerName,\n    o.OrderID,\n    o.OrderDate,\n    o.Amount\nFROM local.Customers c\nJOIN local.Orders o\n    ON c.CustomerID = o.CustomerID;"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					},
+					{
+						"name": "Script1",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "STG_CUSTOMER_ORDERS",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "ls_sqlexpress",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "CREATE TABLE dbo.STG_CUSTOMER_TOTALS\n(\n    CustomerID INT,\n    CustomerName VARCHAR(100),\n    TotalSales DECIMAL(10,2),\n    OrderCount INT\n);\n\nTRUNCATE TABLE dbo.STG_CUSTOMER_TOTALS;\n\nINSERT INTO dbo.STG_CUSTOMER_TOTALS\nSELECT\n    CustomerID,\n    CustomerName,\n    SUM(Amount) AS TotalSales,\n    COUNT(*) AS OrderCount\nFROM dbo.STG_CUSTOMER_ORDERS\nGROUP BY\n    CustomerID,\n    CustomerName;"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_database')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sqlexpress",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/deletepipe')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -173,6 +262,484 @@
 						"type": "int",
 						"defaultValue": -7
 					}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/idr_pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Metadata1",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "ds_datalake_folderlevel",
+								"type": "DatasetReference",
+								"parameters": {
+									"p_container": "idrsource",
+									"p_folder": "idr"
+								}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "If Condition1",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Get Metadata1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greaterOrEquals(length(activity('Get Metadata1').output.childItems),2 )",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Copy data1",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"wildcardFileName": "*.csv",
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".csv"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_datalake_folderlevel",
+											"type": "DatasetReference",
+											"parameters": {
+												"p_container": "idrsource",
+												"p_folder": "idr"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_datalake_folderlevel",
+											"type": "DatasetReference",
+											"parameters": {
+												"p_container": "idrsource",
+												"p_folder": "idrstg"
+											}
+										}
+									]
+								},
+								{
+									"name": "Rename_API_To_Temp",
+									"type": "WebActivity",
+									"dependsOn": [
+										{
+											"activity": "Copy data1",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"method": "PUT",
+										"headers": {
+											"x-ms-rename-source": "/idrsource/idrapi",
+											"x-ms-version": "2023-11-03"
+										},
+										"url": {
+											"value": "https://storageadvjack.dfs.core.windows.net/idrsource/temp?mode=legacy",
+											"type": "Expression"
+										},
+										"body": {
+											"value": "@toLower('')",
+											"type": "Expression"
+										},
+										"authentication": {
+											"type": "MSI",
+											"resource": "https://storage.azure.com"
+										}
+									}
+								},
+								{
+									"name": "Rename_STAGE_To_API",
+									"type": "WebActivity",
+									"dependsOn": [
+										{
+											"activity": "Rename_API_To_Temp",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"method": "PUT",
+										"headers": {
+											"x-ms-rename-source": "/idrsource/idrstg",
+											"x-ms-version": "2023-11-03"
+										},
+										"url": "https://storageadvjack.dfs.core.windows.net/idrsource/idrapi?mode=legacy",
+										"body": "@toLower('')",
+										"authentication": {
+											"type": "MSI",
+											"resource": "https://storage.azure.com"
+										}
+									}
+								},
+								{
+									"name": "Rename_Temp_To_STAGE",
+									"type": "WebActivity",
+									"dependsOn": [
+										{
+											"activity": "Rename_STAGE_To_API",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"method": "PUT",
+										"headers": {
+											"x-ms-rename-source": "/idrsource/temp",
+											"x-ms-version": "2023-11-03"
+										},
+										"url": "https://storageadvjack.dfs.core.windows.net/idrsource/idrstg?mode=legacy",
+										"body": "@toLower('')",
+										"authentication": {
+											"type": "MSI",
+											"resource": "https://storage.azure.com"
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/idr_parquet')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Metadata1",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "ds_par_folder",
+								"type": "DatasetReference",
+								"parameters": {
+									"p_container": "idrpar",
+									"p_folder": "idr"
+								}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "ParquetReadSettings"
+							}
+						}
+					},
+					{
+						"name": "If Condition1",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Get Metadata1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greaterOrEquals(length(activity('Get Metadata1').output.childItems),2 )",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Copy data1",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "ParquetSource",
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"wildcardFileName": "*.parquet",
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "ParquetReadSettings"
+											}
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_par_folder",
+											"type": "DatasetReference",
+											"parameters": {
+												"p_container": "idrpar",
+												"p_folder": "idr"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_par_folder",
+											"type": "DatasetReference",
+											"parameters": {
+												"p_container": "idrpar",
+												"p_folder": "idrstg"
+											}
+										}
+									]
+								},
+								{
+									"name": "Rename_API_To_Temp",
+									"type": "WebActivity",
+									"dependsOn": [
+										{
+											"activity": "Copy data1",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"method": "PUT",
+										"headers": {
+											"x-ms-rename-source": "/idrpar/idrapi",
+											"x-ms-version": "2023-11-03"
+										},
+										"url": {
+											"value": "https://storageadvjack.dfs.core.windows.net/idrpar/temp?mode=legacy",
+											"type": "Expression"
+										},
+										"body": {
+											"value": "@toLower('')",
+											"type": "Expression"
+										},
+										"authentication": {
+											"type": "MSI",
+											"resource": "https://storage.azure.com"
+										}
+									}
+								},
+								{
+									"name": "Rename_STAGE_To_API",
+									"type": "WebActivity",
+									"dependsOn": [
+										{
+											"activity": "Rename_API_To_Temp",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"method": "PUT",
+										"headers": {
+											"x-ms-rename-source": "/idrpar/idrstg",
+											"x-ms-version": "2023-11-03"
+										},
+										"url": "https://storageadvjack.dfs.core.windows.net/idrpar/idrapi?mode=legacy",
+										"body": "@toLower('')",
+										"authentication": {
+											"type": "MSI",
+											"resource": "https://storage.azure.com"
+										}
+									}
+								},
+								{
+									"name": "Rename_Temp_To_STAGE",
+									"type": "WebActivity",
+									"dependsOn": [
+										{
+											"activity": "Rename_STAGE_To_API",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"method": "PUT",
+										"headers": {
+											"x-ms-rename-source": "/idrpar/temp",
+											"x-ms-version": "2023-11-03"
+										},
+										"url": "https://storageadvjack.dfs.core.windows.net/idrpar/idrstg?mode=legacy",
+										"body": "@toLower('')",
+										"authentication": {
+											"type": "MSI",
+											"resource": "https://storage.azure.com"
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
 				},
 				"annotations": []
 			},
@@ -488,7 +1055,9 @@
 				"annotations": [],
 				"lastPublishTime": "2026-04-26T09:12:21Z"
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_database')]"
+			]
 		}
 	]
 }
