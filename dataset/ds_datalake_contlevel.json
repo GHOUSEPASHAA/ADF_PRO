@@ -1,0 +1,30 @@
+{
+	"name": "ds_datalake_contlevel",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_datalake",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"p_container": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": {
+					"value": "@dataset().p_container",
+					"type": "Expression"
+				}
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
