@@ -1,0 +1,67 @@
+{
+	"name": "temptables",
+	"properties": {
+		"activities": [
+			{
+				"name": "STG_CUSTOMER_ORDERS",
+				"type": "Script",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_sqlexpress",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "\n\nTRUNCATE TABLE STG_CUSTOMER_ORDERS;\n\nINSERT INTO STG_CUSTOMER_ORDERS\nSELECT\n    c.CustomerID,\n    c.CustomerName,\n    o.OrderID,\n    o.OrderDate,\n    o.Amount\nFROM local.Customers c\nJOIN local.Orders o\n    ON c.CustomerID = o.CustomerID;"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "Script1",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "STG_CUSTOMER_ORDERS",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_sqlexpress",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "CREATE TABLE dbo.STG_CUSTOMER_TOTALS\n(\n    CustomerID INT,\n    CustomerName VARCHAR(100),\n    TotalSales DECIMAL(10,2),\n    OrderCount INT\n);\n\nTRUNCATE TABLE dbo.STG_CUSTOMER_TOTALS;\n\nINSERT INTO dbo.STG_CUSTOMER_TOTALS\nSELECT\n    CustomerID,\n    CustomerName,\n    SUM(Amount) AS TotalSales,\n    COUNT(*) AS OrderCount\nFROM dbo.STG_CUSTOMER_ORDERS\nGROUP BY\n    CustomerID,\n    CustomerName;"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			}
+		],
+		"annotations": []
+	}
+}
