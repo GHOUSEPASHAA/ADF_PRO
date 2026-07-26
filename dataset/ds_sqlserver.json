@@ -1,0 +1,30 @@
+{
+	"name": "ds_sqlserver",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sqlexpress",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"p_schema_name": {
+				"type": "string"
+			},
+			"p_table_name": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().p_schema_name",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().p_table_name",
+				"type": "Expression"
+			}
+		}
+	}
+}

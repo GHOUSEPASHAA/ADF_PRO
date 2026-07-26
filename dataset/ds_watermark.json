@@ -1,0 +1,32 @@
+{
+	"name": "ds_watermark",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_datalake",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "watermark.json",
+				"folderPath": "control",
+				"fileSystem": "raw"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"stg_game_data": {
+					"type": "object",
+					"properties": {
+						"last_load_timestamp": {
+							"type": "string"
+						}
+					}
+				}
+			}
+		}
+	}
+}
