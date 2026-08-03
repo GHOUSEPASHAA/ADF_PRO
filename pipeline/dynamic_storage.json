@@ -1,0 +1,91 @@
+{
+	"name": "dynamic_storage",
+	"properties": {
+		"activities": [
+			{
+				"name": "CheckContainerExists",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"headers": {
+						"x-ms-version": "2023-11-03"
+					},
+					"url": "@concat( 'https://storageadvjack.blob.core.windows.net/', pipeline().parameters.Master_client, '?restype=container' )",
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://storage.azure.com/"
+					}
+				}
+			},
+			{
+				"name": "create_storage",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "CheckContainerExists",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "PUT",
+					"headers": {
+						"x-ms-version": "2023-11-03"
+					},
+					"url": {
+						"value": "@concat( 'https://storageadvjack.blob.core.windows.net/', pipeline().parameters.Master_client, '?restype=container' )",
+						"type": "Expression"
+					},
+					"body": {
+						"value": "{}",
+						"type": "Expression"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://storage.azure.com/"
+					}
+				}
+			},
+			{
+				"name": "Wait1",
+				"type": "Wait",
+				"dependsOn": [
+					{
+						"activity": "CheckContainerExists",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"waitTimeInSeconds": 1
+				}
+			}
+		],
+		"parameters": {
+			"Master_client": {
+				"type": "string"
+			}
+		},
+		"annotations": []
+	}
+}
