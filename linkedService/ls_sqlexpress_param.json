@@ -1,0 +1,26 @@
+{
+	"name": "ls_sqlexpress_param",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"parameters": {
+			"DatabaseName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"server": "DESKTOP-0KPSU0R\\MSSQLSERVER01",
+			"database": "@{linkedService().DatabaseName}",
+			"encrypt": "optional",
+			"trustServerCertificate": false,
+			"authenticationType": "SQL",
+			"userName": "jack",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiI1NmM5ZDhhNi0wYzk2LTRlNTEtYWQ5Yy02ODczMDNjMzAwNGYiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "selfhosted",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
