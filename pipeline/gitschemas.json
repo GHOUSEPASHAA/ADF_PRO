@@ -1,0 +1,106 @@
+{
+	"name": "gitschemas",
+	"properties": {
+		"activities": [
+			{
+				"name": "Script1",
+				"description": "",
+				"type": "Script",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_sqlexpress_param",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"DatabaseName": {
+							"value": "@pipeline().parameters.p_db_name",
+							"type": "Expression"
+						}
+					}
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": {
+								"value": "IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'Pre_Bronzevivo')\nBEGIN\n    EXEC('CREATE SCHEMA Pre_Bronzevivo');\nEND;\n\nIF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'Bronzevvivo')\nBEGIN\n    EXEC('CREATE SCHEMA Bronzevvivo');\nEND;\n\nIF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'Silvervivo')\nBEGIN\n    EXEC('CREATE SCHEMA Silvervivo');\nEND;\n\nIF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'Goldvivo')\nBEGIN\n    EXEC('CREATE SCHEMA Goldvivo');\nEND;",
+								"type": "Expression"
+							}
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "Web1",
+				"type": "WebActivity",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": "https://raw.githubusercontent.com/GHOUSEPASHAA/Adf_schemas/refs/heads/main/bronze_schema_create.txt"
+				}
+			},
+			{
+				"name": "Script2",
+				"type": "Script",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "Web1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_sqlexpress",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": {
+								"value": "@activity('Web1').output.response",
+								"type": "Expression"
+							}
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			}
+		],
+		"parameters": {
+			"p_db_name": {
+				"type": "string"
+			}
+		},
+		"annotations": []
+	}
+}
