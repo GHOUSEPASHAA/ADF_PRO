@@ -1,0 +1,82 @@
+{
+	"name": "gitschemas_copy1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Web1",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"headers": {
+						"Authorization": {
+							"value": "token github_cat_11A6R2Z3Y0Or5vYbsFT3aL_qRDfeHHxlvawsFLomhzcvc0vMaiRkaOTgoH0TabeOWwKLOPJZL6EG4vUYWQ",
+							"type": "Expression"
+						},
+						"Accept": "application/vnd.github.raw"
+					},
+					"url": {
+						"value": "https://raw.githubusercontent.com/GHOUSEPASHAA/adf_schemas_private/refs/heads/main/bronze_schema_create.sql?token=GHSAT0AAAAAAEEW5UHPCUOPL6DC276CASCM2TS375Q",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Script2",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Web1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_sqlexpress_param",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"DatabaseName": {
+							"value": "@pipeline().parameters.p_db_name",
+							"type": "Expression"
+						}
+					}
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": {
+								"value": "@activity('Web1').output.response",
+								"type": "Expression"
+							}
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			}
+		],
+		"parameters": {
+			"p_db_name": {
+				"type": "string"
+			}
+		},
+		"annotations": []
+	}
+}
