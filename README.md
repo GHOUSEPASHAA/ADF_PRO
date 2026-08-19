@@ -68,3 +68,6 @@ CSV Load   XLSX Load
         v
 Audit / Archive
 ```
+<img width="1122" height="1402" alt="flow" src="https://github.com/user-attachments/assets/6fb1663f-d732-43bc-bb96-0a2fe106caa5" />
+
+
